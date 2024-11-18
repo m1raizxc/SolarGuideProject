@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.solarguide.databinding.ActivityAvailableDevicesBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import java.util.*
 
 class AvailableDevicesActivity : AppCompatActivity() {
 
@@ -24,13 +25,23 @@ class AvailableDevicesActivity : AppCompatActivity() {
     private lateinit var firebaseAuth: FirebaseAuth
     private lateinit var sharedPreferences: SharedPreferences
 
+    companion object {
+        const val PREFS_KEY = "DevicePreferences"
+        const val ACTIVE_DEVICE_1 = "ActiveDevice1"
+        const val ACTIVE_DEVICE_2 = "ActiveDevice2"
+        const val ACTIVE_DEVICE_3 = "ActiveDevice3"
+        const val MINI_FAN = "MiniFan"
+        const val POWER_BANK = "PowerBank"
+        const val SMART_PHONE = "SmartPhone"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityAvailableDevicesBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         // Initialize SharedPreferences
-        sharedPreferences = getSharedPreferences("DevicePreferences", MODE_PRIVATE)
+        sharedPreferences = getSharedPreferences(PREFS_KEY, MODE_PRIVATE)
 
         // Initialize MediaPlayer
         popPlayer = MediaPlayer.create(this, R.raw.pop_sound)
@@ -43,7 +54,7 @@ class AvailableDevicesActivity : AppCompatActivity() {
         database1 = FirebaseDatabase.getInstance(firebaseRTDB).getReference("sensorData")
         database2 = FirebaseDatabase.getInstance(firebaseRTDB).getReference("relayData")
 
-        // Fetch and display battery data from database1
+        // Fetch and display battery data
         fetchAndDisplayData()
 
         // Setup menu buttons
@@ -53,241 +64,136 @@ class AvailableDevicesActivity : AppCompatActivity() {
         loadDeviceStates()
 
         // Set up click listener for addDeviceButton
-        val addDeviceButton = binding.addDeviceButton
-        addDeviceButton.setOnClickListener {
+        binding.addDeviceButton.setOnClickListener {
             showDevicePopup()
         }
 
         // Remove button listeners for each device layout
         binding.layout1RemoveBtn.setOnClickListener {
-            if (binding.deviceLayout1.visibility == View.VISIBLE) {
-                deactivateDevice(
-                    layoutKey = "ActiveDevice1",
-                    message = "Device in Slot 1 deactivated!",
-                    deviceLayout = binding.deviceLayout1,
-                    availableLayout = binding.layoutAvaible1
-                )
-            }
+            deactivateDevice(ACTIVE_DEVICE_1, "Device in Slot 1 deactivated!", binding.deviceLayout1, binding.layoutAvaible1)
         }
 
         binding.layout2RemoveBtn.setOnClickListener {
-            if (binding.deviceLayout2.visibility == View.VISIBLE) {
-                deactivateDevice(
-                    layoutKey = "ActiveDevice2",
-                    message = "Device in Slot 2 deactivated!",
-                    deviceLayout = binding.deviceLayout2,
-                    availableLayout = binding.layoutAvailable2
-                )
-            }
+            deactivateDevice(ACTIVE_DEVICE_2, "Device in Slot 2 deactivated!", binding.deviceLayout2, binding.layoutAvailable2)
         }
 
         binding.layout3RemoveBtn.setOnClickListener {
-            if (binding.deviceLayout3.visibility == View.VISIBLE) {
-                deactivateDevice(
-                    layoutKey = "ActiveDevice3",
-                    message = "Device in Slot 3 deactivated!",
-                    deviceLayout = binding.deviceLayout3,
-                    availableLayout = binding.layoutAvailable3
-                )
-            }
+            deactivateDevice(ACTIVE_DEVICE_3, "Device in Slot 3 deactivated!", binding.deviceLayout3, binding.layoutAvailable3)
         }
 
-
+        // Play startup sound
         popPlayer.start()
     }
 
-    // Function to show the device popup
     private fun showDevicePopup() {
         val dialog = Dialog(this)
-
-        // Inflate layout with the root dialog view
-        val dialogView: View = LayoutInflater.from(this)
-            .inflate(R.layout.device_popup, dialog.findViewById(android.R.id.content), false)
+        val dialogView: View = LayoutInflater.from(this).inflate(R.layout.device_popup, binding.root, false)
         dialog.setContentView(dialogView)
 
-        // Initialize views in the dialog
         val deviceListView = dialogView.findViewById<ListView>(R.id.deviceListView)
         val closePopupButton = dialogView.findViewById<Button>(R.id.closePopupButton)
 
-        val devices = listOf("", "", "")
-
-        // Set up an adapter for the ListView to display devices
+        val devices = listOf("Mini Fan", "Power Bank", "Smart Phone")
         val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, devices)
         deviceListView.adapter = adapter
 
-        // Handle list item click
         deviceListView.setOnItemClickListener { _, _, position, _ ->
             when (position) {
-                0 -> {
-                    // Mini Fan selected
-                    activateDevice(
-                        key = "MiniFan",
-                        message = "Mini Fan activated!",
-                        drawableId = R.drawable.fan,    // Replace with actual drawable resource
-                        deviceName = "Mini Fan"
-                    )
-                }
-                1 -> {
-                    // Power Bank selected
-                    activateDevice(
-                        key = "PowerBank",
-                        message = "Power Bank activated!",
-                        drawableId = R.drawable.powerbank,  // Replace with actual drawable resource
-                        deviceName = "Power Bank"
-                    )
-                }
-                2 -> {
-                    // Smart Phone selected
-                    activateDevice(
-                        key = "SmartPhone",
-                        message = "Smart Phone activated!",
-                        drawableId = R.drawable.smartphone, // Replace with actual drawable resource
-                        deviceName = "Smart Phone"
-                    )
-                }
+                0 -> activateDevice(MINI_FAN, "Mini Fan activated!", R.drawable.fan, "Mini Fan")
+                1 -> activateDevice(POWER_BANK, "Power Bank activated!", R.drawable.powerbank, "Power Bank")
+                2 -> activateDevice(SMART_PHONE, "Smart Phone activated!", R.drawable.smartphone, "Smart Phone")
             }
-            dialog.dismiss() // Close the dialog after selecting an item
+            dialog.dismiss()
         }
 
-        // Handle close button click
         closePopupButton.setOnClickListener {
-            dialog.dismiss() // Close the dialog
+            dialog.dismiss()
         }
 
         dialog.show()
     }
 
-    // Function to activate a device and update its layout, icon, and text dynamically
-    private fun activateDevice(
-        key: String,
-        message: String,
-        drawableId: Int,
-        deviceName: String
-    ) {
+    private fun activateDevice(key: String, message: String, drawableId: Int, deviceName: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
 
         when {
-            binding.deviceLayout1.visibility == View.GONE -> {
-                binding.deviceLayout1.visibility = View.VISIBLE
-                binding.layoutAvaible1.visibility = View.GONE
-                binding.device1Icon.setImageResource(drawableId)
-                binding.textDevice1.text = deviceName
-                saveDeviceState(key, true, "ActiveDevice1")
-            }
-            binding.deviceLayout2.visibility == View.GONE -> {
-                binding.deviceLayout2.visibility = View.VISIBLE
-                binding.layoutAvailable2.visibility = View.GONE
-                binding.device2Icon.setImageResource(drawableId)
-                binding.textDevice2.text = deviceName
-                saveDeviceState(key, true, "ActiveDevice2")
-            }
-            binding.deviceLayout3.visibility == View.GONE -> {
-                binding.deviceLayout3.visibility = View.VISIBLE
-                binding.layoutAvailable3.visibility = View.GONE
-                binding.device3Icon.setImageResource(drawableId)
-                binding.textDevice3.text = deviceName
-                saveDeviceState(key, true, "ActiveDevice3")
-            }
-            else -> {
-                Toast.makeText(this, "All device slots are occupied!", Toast.LENGTH_SHORT).show()
-            }
+            binding.deviceLayout1.visibility == View.GONE -> setupDeviceSlot(drawableId, deviceName, binding.deviceLayout1, binding.layoutAvaible1, ACTIVE_DEVICE_1, key)
+            binding.deviceLayout2.visibility == View.GONE -> setupDeviceSlot(drawableId, deviceName, binding.deviceLayout2, binding.layoutAvailable2, ACTIVE_DEVICE_2, key)
+            binding.deviceLayout3.visibility == View.GONE -> setupDeviceSlot(drawableId, deviceName, binding.deviceLayout3, binding.layoutAvailable3, ACTIVE_DEVICE_3, key)
+            else -> Toast.makeText(this, "All device slots are occupied!", Toast.LENGTH_SHORT).show()
         }
     }
 
+    private fun setupDeviceSlot(drawableId: Int, deviceName: String, deviceLayout: View, availableLayout: View, layoutKey: String, key: String) {
+        deviceLayout.visibility = View.VISIBLE
+        availableLayout.visibility = View.GONE
+        when (deviceLayout) {
+            binding.deviceLayout1 -> {
+                binding.device1Icon.setImageResource(drawableId)
+                binding.textDevice1.text = deviceName
+            }
+            binding.deviceLayout2 -> {
+                binding.device2Icon.setImageResource(drawableId)
+                binding.textDevice2.text = deviceName
+            }
+            binding.deviceLayout3 -> {
+                binding.device3Icon.setImageResource(drawableId)
+                binding.textDevice3.text = deviceName
+            }
+        }
+        saveDeviceState(key, true, layoutKey)
+    }
 
-    // Function to deactivate a device and save its state
     private fun deactivateDevice(layoutKey: String, message: String, deviceLayout: View, availableLayout: View) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         deviceLayout.visibility = View.GONE
         availableLayout.visibility = View.VISIBLE
-
-        // Clear the active device in SharedPreferences and update Firebase
-        val editor = sharedPreferences.edit()
-        editor.remove(layoutKey) // Remove the active device from the specific slot
-        editor.apply()
-
-        // Update the corresponding relayData slot in Firebase based on layoutKey
-        when (layoutKey) {
-            "ActiveDevice1" -> database2.child("deviceSocket1").setValue(false)
-            "ActiveDevice2" -> database2.child("deviceSocket2").setValue(false)
-            "ActiveDevice3" -> database2.child("deviceSocket3").setValue(false)
-        }
+        saveDeviceState("", false, layoutKey)
     }
 
-
-
-
-
-
-    // Function to save the device's active state and update the Realtime Database
     private fun saveDeviceState(key: String, isActive: Boolean, layoutKey: String = "") {
         val editor = sharedPreferences.edit()
         editor.putBoolean(key, isActive)
 
         when (layoutKey) {
-            "ActiveDevice1" -> database2.child("deviceSocket1").setValue(isActive)
-            "ActiveDevice2" -> database2.child("deviceSocket2").setValue(isActive)
-            "ActiveDevice3" -> database2.child("deviceSocket3").setValue(isActive)
+            ACTIVE_DEVICE_1 -> database2.child("deviceSocket1").setValue(isActive)
+            ACTIVE_DEVICE_2 -> database2.child("deviceSocket2").setValue(isActive)
+            ACTIVE_DEVICE_3 -> database2.child("deviceSocket3").setValue(isActive)
         }
 
-        if (isActive) {
-            editor.putString(layoutKey, key)
-        } else {
-            editor.remove(layoutKey)
-        }
+        if (isActive) editor.putString(layoutKey, key) else editor.remove(layoutKey)
         editor.apply()
     }
 
-
-    // Function to load the device's active states
     private fun loadDeviceStates() {
-        val isMiniFanActive = sharedPreferences.getBoolean("MiniFan", false)
-        val isPowerBankActive = sharedPreferences.getBoolean("PowerBank", false)
-        val isSmartPhoneActive = sharedPreferences.getBoolean("SmartPhone", false)
+        val isMiniFanActive = sharedPreferences.getBoolean(MINI_FAN, false)
+        val isPowerBankActive = sharedPreferences.getBoolean(POWER_BANK, false)
+        val isSmartPhoneActive = sharedPreferences.getBoolean(SMART_PHONE, false)
 
-        if (isMiniFanActive) {
-            binding.deviceLayout1.visibility = View.VISIBLE
-            binding.layoutAvaible1.visibility = View.GONE
-        } else {
-            binding.deviceLayout1.visibility = View.GONE
-            binding.layoutAvaible1.visibility = View.VISIBLE
-        }
-
-        if (isPowerBankActive) {
-            binding.deviceLayout2.visibility = View.VISIBLE
-            binding.layoutAvailable2.visibility = View.GONE
-        } else {
-            binding.deviceLayout2.visibility = View.GONE
-            binding.layoutAvailable2.visibility = View.VISIBLE
-        }
-
-        if (isSmartPhoneActive) {
-            binding.deviceLayout3.visibility = View.VISIBLE
-            binding.layoutAvailable3.visibility = View.GONE
-        } else {
-            binding.deviceLayout3.visibility = View.GONE
-            binding.layoutAvailable3.visibility = View.VISIBLE
-        }
+        setupDeviceState(isMiniFanActive, binding.deviceLayout1, binding.layoutAvaible1)
+        setupDeviceState(isPowerBankActive, binding.deviceLayout2, binding.layoutAvailable2)
+        setupDeviceState(isSmartPhoneActive, binding.deviceLayout3, binding.layoutAvailable3)
     }
 
-    // Function to fetch and display battery data
+    private fun setupDeviceState(isActive: Boolean, deviceLayout: View, availableLayout: View) {
+        deviceLayout.visibility = if (isActive) View.VISIBLE else View.GONE
+        availableLayout.visibility = if (isActive) View.GONE else View.VISIBLE
+    }
+
     private fun fetchAndDisplayData() {
         database1.child("Battery Percentage").addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val batteryPercentage = snapshot.getValue(String::class.java)?.toIntOrNull() ?: 0
-                binding.devicesBatt.text = batteryPercentage.toString()
+                binding.devicesBatt.text = String.format(Locale.getDefault(), "%d%%", batteryPercentage)
             }
 
             override fun onCancelled(error: DatabaseError) {
-                // Handle potential errors here
+                Toast.makeText(this@AvailableDevicesActivity, "Error: ${error.message}", Toast.LENGTH_SHORT).show()
             }
         })
     }
 
-
-    // Function to set up menu buttons
     private fun setupMenuButtons() {
-        // Set up menu button listeners
         val frameLayoutIds = listOf(
             R.id.WeatherFrameButton,
             R.id.BatteryFrameButton,
@@ -305,6 +211,10 @@ class AvailableDevicesActivity : AppCompatActivity() {
         )
 
         ButtonUtils.setMenuButtonClickListener(this, frameLayoutIds, activities)
-        popPlayer.start()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (::popPlayer.isInitialized) popPlayer.release()
     }
 }
