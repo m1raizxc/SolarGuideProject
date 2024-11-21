@@ -1,9 +1,5 @@
 package com.example.solarguide
 
-import android.app.AlarmManager
-import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
@@ -13,20 +9,21 @@ import android.util.Log
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.bumptech.glide.Glide
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.example.solarguide.databinding.ActivityPanelPerformanceBinding
-import java.util.*
 
 class PanelPerformanceActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityPanelPerformanceBinding
-    private lateinit var database: DatabaseReference
-    private lateinit var firebaseAuth: FirebaseAuth
+    private lateinit var sensorDataRef: DatabaseReference
+    private lateinit var dailyRef: DatabaseReference
+    private lateinit var cumulativeRef: DatabaseReference
     private var databaseListener: ValueEventListener? = null
     private lateinit var popPlayer: MediaPlayer
     private val handler = Handler(Looper.getMainLooper())
+    private lateinit var dailyListener: ValueEventListener
+    private lateinit var cumulativeListener: ValueEventListener
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,17 +31,252 @@ class PanelPerformanceActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         popPlayer = MediaPlayer.create(this, R.raw.pop_sound)
-        firebaseAuth = FirebaseAuth.getInstance()
 
-        // Set up Firebase Realtime Database reference
-        val databaseUrl = "https://solarguide-default-rtdb.asia-southeast1.firebasedatabase.app/"
-        database = FirebaseDatabase.getInstance(databaseUrl).reference.child("sensorData")
+        // Initialize Firebase Database references
+        val mainDbUrl = "https://solarguide-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        sensorDataRef = FirebaseDatabase.getInstance(mainDbUrl).reference.child("sensorData")
+
+        val secondaryDbUrl = "https://solarguide-bc8d9.asia-southeast1.firebasedatabase.app/"
+        dailyRef = FirebaseDatabase.getInstance(secondaryDbUrl).reference.child("daily")
+        cumulativeRef = FirebaseDatabase.getInstance(secondaryDbUrl).reference.child("cumulative")
+
+        // Start listening to realtime updates
+        handleRealtimeUpdates()
+
+        // Fetch cumulative data and display it
+        fetchCumulativeDataAndDisplay()
 
         fetchDataAndDisplay()
-        scheduleMidnightReset()
+
+        startSummingAndResettingDailyValues()
+
+        updateDailyDataFromSensor()
+
         setupTooltips()
         setupMenuButtons()
     }
+
+    private fun updateDailyDataFromSensor() {
+        databaseListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                try {
+                    val newBatteryDischarge = snapshot.child("Battery Discharge Today")
+                        .getValue(String::class.java)?.toFloatOrNull() ?: 0f
+                    val newEnergyYield = snapshot.child("Energy Yield Today")
+                        .getValue(String::class.java)?.toFloatOrNull() ?: 0f
+
+                    dailyRef.get().addOnSuccessListener { dailySnapshot ->
+                        val currentBatteryDischarge = dailySnapshot.child("Battery Discharge Today")
+                            .getValue(String::class.java)?.toFloatOrNull() ?: 0f
+                        val currentEnergyYield = dailySnapshot.child("Energy Yield Today")
+                            .getValue(String::class.java)?.toFloatOrNull() ?: 0f
+
+                        // Add new data to existing daily data
+                        val updatedBatteryDischarge = currentBatteryDischarge + newBatteryDischarge
+                        val updatedEnergyYield = currentEnergyYield + newEnergyYield
+
+                        // Prepare data for updating
+                        val dailyUpdates = mapOf(
+                            "Battery Discharge Today" to updatedBatteryDischarge.toString(),
+                            "Energy Yield Today" to updatedEnergyYield.toString()
+                        )
+
+                        // Log and update dailyRef
+                        Log.d("PanelPerformanceActivity", "Updated Daily Data: Discharge=$updatedBatteryDischarge, Yield=$updatedEnergyYield")
+                        dailyRef.updateChildren(dailyUpdates).addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                Log.d("PanelPerformanceActivity", "Successfully updated dailyRef.")
+                            } else {
+                                Log.e("PanelPerformanceActivity", "Failed to update dailyRef: ${task.exception}")
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("PanelPerformanceActivity", "Error updating daily data from sensor: ", e)
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("PanelPerformanceActivity", "Failed to listen to sensorDataRef updates: ${error.message}")
+            }
+        }
+
+        // Add the listener to sensorDataRef
+        sensorDataRef.addValueEventListener(databaseListener!!)
+    }
+
+
+
+
+    private fun fetchDataAndDisplay() {
+        dailyRef.get().addOnSuccessListener { snapshot ->
+            if (snapshot.exists()) {
+                try {
+                    val batteryDischargeToday = snapshot.child("Battery Discharge Today")
+                        .getValue(String::class.java)?.toFloatOrNull() ?: 0f
+                    val energyYieldToday = snapshot.child("Energy Yield Today")
+                        .getValue(String::class.java)?.toFloatOrNull() ?: 0f
+
+                    // Update the UI
+                    binding.TextTodayUsageValue.text = batteryDischargeToday.toString()
+                    binding.TextTodayYieldValue.text = energyYieldToday.toString()
+
+                    Log.d("PanelPerformanceActivity", "Displayed Today Data: Discharge=$batteryDischargeToday, Yield=$energyYieldToday")
+                } catch (e: Exception) {
+                    Log.e("PanelPerformanceActivity", "Error processing daily snapshot: ", e)
+                    Toast.makeText(this, "Error displaying today data", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Log.d("PanelPerformanceActivity", "Daily snapshot does not exist")
+                Toast.makeText(this, "No today data available", Toast.LENGTH_SHORT).show()
+            }
+        }.addOnFailureListener { e ->
+            Log.e("PanelPerformanceActivity", "Failed to fetch today data: ", e)
+            Toast.makeText(this, "Failed to retrieve today data", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+
+    private fun fetchCumulativeDataAndDisplay() {
+        cumulativeRef.get().addOnSuccessListener { cumulativeSnapshot ->
+            try {
+                val batteryDischargeTotal = cumulativeSnapshot.child("Battery Discharge Total")
+                    .getValue(String::class.java)?.toFloatOrNull() ?: 0f
+                val energyYieldTotal = cumulativeSnapshot.child("Energy Yield Total")
+                    .getValue(String::class.java)?.toFloatOrNull() ?: 0f
+
+                // Bind cumulative totals to UI
+                binding.TextTotalUsageValue.text = batteryDischargeTotal.toString()
+                binding.TextTotalYieldValue.text = energyYieldTotal.toString()
+
+                Log.d("PanelPerformanceActivity", "Battery Discharge Total: $batteryDischargeTotal")
+                Log.d("PanelPerformanceActivity", "Energy Yield Total: $energyYieldTotal")
+            } catch (e: Exception) {
+                Log.e("PanelPerformanceActivity", "Error processing cumulative snapshot: ", e)
+                Toast.makeText(this@PanelPerformanceActivity, "Error processing cumulative data", Toast.LENGTH_SHORT).show()
+            }
+        }.addOnFailureListener { e ->
+            Log.e("PanelPerformanceActivity", "Failed to retrieve cumulative data: ", e)
+            Toast.makeText(this@PanelPerformanceActivity, "Failed to retrieve cumulative data", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun startSummingAndResettingDailyValues() {
+        handler.postDelayed(object : Runnable {
+            override fun run() {
+                dailyRef.get().addOnSuccessListener { dailySnapshot ->
+                    try {
+                        val batteryDischargeToday = dailySnapshot.child("Battery Discharge Today")
+                            .getValue(String::class.java)?.toFloatOrNull() ?: 0f
+                        val energyYieldToday = dailySnapshot.child("Energy Yield Today")
+                            .getValue(String::class.java)?.toFloatOrNull() ?: 0f
+
+                        if (batteryDischargeToday > 0 || energyYieldToday > 0) {
+                            cumulativeRef.get().addOnSuccessListener { cumulativeSnapshot ->
+                                val batteryDischargeTotal = cumulativeSnapshot.child("Battery Discharge Total")
+                                    .getValue(String::class.java)?.toFloatOrNull() ?: 0f
+                                val energyYieldTotal = cumulativeSnapshot.child("Energy Yield Total")
+                                    .getValue(String::class.java)?.toFloatOrNull() ?: 0f
+
+                                val newBatteryDischargeTotal = batteryDischargeTotal + batteryDischargeToday
+                                val newEnergyYieldTotal = energyYieldTotal + energyYieldToday
+
+                                // Update cumulative totals
+                                val cumulativeUpdates = mapOf(
+                                    "Battery Discharge Total" to newBatteryDischargeTotal.toString(),
+                                    "Energy Yield Total" to newEnergyYieldTotal.toString()
+                                )
+                                cumulativeRef.updateChildren(cumulativeUpdates).addOnCompleteListener { task ->
+                                    if (task.isSuccessful) {
+                                        Log.d("PanelPerformanceActivity", "Cumulative totals updated successfully.")
+
+                                        // Reset daily values to 0 after updating cumulative totals
+                                        val dailyReset = mapOf(
+                                            "Battery Discharge Today" to "0",
+                                            "Energy Yield Today" to "0"
+                                        )
+                                        dailyRef.updateChildren(dailyReset).addOnCompleteListener { resetTask ->
+                                            if (resetTask.isSuccessful) {
+                                                Log.d("PanelPerformanceActivity", "Daily values reset to 0.")
+                                            } else {
+                                                Log.e("PanelPerformanceActivity", "Failed to reset daily values: ${resetTask.exception}")
+                                            }
+                                        }
+                                    } else {
+                                        Log.e("PanelPerformanceActivity", "Failed to update cumulative totals: ${task.exception}")
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("PanelPerformanceActivity", "Error processing cumulative update: ", e)
+                    }
+                }
+
+                // Schedule the next update in 1 minute
+                handler.postDelayed(this, 60000)
+            }
+        }, 60000)
+    }
+
+
+
+
+    private fun handleRealtimeUpdates() {
+        // Listener for dailyRef (today data)
+        dailyRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                try {
+                    val batteryDischargeToday = snapshot.child("Battery Discharge Today")
+                        .getValue(String::class.java)?.toFloatOrNull() ?: 0f
+                    val energyYieldToday = snapshot.child("Energy Yield Today")
+                        .getValue(String::class.java)?.toFloatOrNull() ?: 0f
+
+                    // Update the UI
+                    binding.TextTodayUsageValue.text = batteryDischargeToday.toString()
+                    binding.TextTodayYieldValue.text = energyYieldToday.toString()
+
+                    Log.d("PanelPerformanceActivity", "Realtime Today Data: Discharge=$batteryDischargeToday, Yield=$energyYieldToday")
+                } catch (e: Exception) {
+                    Log.e("PanelPerformanceActivity", "Error updating today data UI: ", e)
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("PanelPerformanceActivity", "Failed to listen to dailyRef updates: ${error.message}")
+            }
+        })
+
+        // Listener for cumulativeRef (total data)
+        cumulativeRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                try {
+                    val batteryDischargeTotal = snapshot.child("Battery Discharge Total")
+                        .getValue(String::class.java)?.toFloatOrNull() ?: 0f
+                    val energyYieldTotal = snapshot.child("Energy Yield Total")
+                        .getValue(String::class.java)?.toFloatOrNull() ?: 0f
+
+                    // Update the UI
+                    binding.TextTotalUsageValue.text = batteryDischargeTotal.toString()
+                    binding.TextTotalYieldValue.text = energyYieldTotal.toString()
+
+                    Log.d("PanelPerformanceActivity", "Realtime Cumulative Data: Discharge=$batteryDischargeTotal, Yield=$energyYieldTotal")
+                } catch (e: Exception) {
+                    Log.e("PanelPerformanceActivity", "Error updating cumulative data UI: ", e)
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("PanelPerformanceActivity", "Failed to listen to cumulativeRef updates: ${error.message}")
+            }
+        })
+    }
+
+
+
+
+
+
 
     private fun setupTooltips() {
         val usageInfo: ImageView = findViewById(R.id.usageInfo)
@@ -77,82 +309,20 @@ class PanelPerformanceActivity : AppCompatActivity() {
         }
     }
 
-    private fun fetchDataAndDisplay() {
-        databaseListener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                if (snapshot.exists()) {
-                    val batteryDischargeToday = snapshot.child("Battery Discharge Today").getValue(String::class.java)?.toFloatOrNull() ?: 0f
-                    val batteryDischargeTotal = snapshot.child("Battery Discharge Total").getValue(String::class.java)?.toFloatOrNull() ?: 0f
-                    val energyYieldToday = snapshot.child("Energy Yield Today").getValue(String::class.java)?.toFloatOrNull() ?: 0f
-                    val energyYieldTotal = snapshot.child("Energy Yield Total").getValue(String::class.java)?.toFloatOrNull() ?: 0f
-                    val isCharging = snapshot.child("isCharging").getValue(Boolean::class.java) ?: false
-
-                    // Update UI
-                    binding.TextTodayUsageValue.text = batteryDischargeToday.toString()
-                    binding.TextTotalUsageValue.text = batteryDischargeTotal.toString()
-                    binding.TextTodayYieldValue.text = energyYieldToday.toString()
-                    binding.TextTotalYieldValue.text = energyYieldTotal.toString()
-                    updateBatteryIcon(isCharging)
-
-                    Log.d("PanelPerformanceActivity", "Battery Discharge Today: $batteryDischargeToday")
-                    Log.d("PanelPerformanceActivity", "Battery Discharge Total: $batteryDischargeTotal")
-                    Log.d("PanelPerformanceActivity", "Energy Yield Today: $energyYieldToday")
-                    Log.d("PanelPerformanceActivity", "Energy Yield Total: $energyYieldTotal")
-                } else {
-                    Log.d("PanelPerformanceActivity", "Data snapshot does not exist")
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("PanelPerformanceActivity", "Database error: ${error.message}")
-                Toast.makeText(this@PanelPerformanceActivity, "Failed to load data", Toast.LENGTH_SHORT).show()
-            }
-        }
-        database.addValueEventListener(databaseListener!!)
-    }
-
-    private fun updateBatteryIcon(isCharging: Boolean) {
-        val batteryIcon: ImageView = binding.batteryIcon
-        if (isCharging) {
-            Glide.with(this).asGif().load(R.drawable.yield_gif).into(batteryIcon)
-        } else {
-            Glide.with(this).load(R.drawable.yield).into(batteryIcon)
-        }
-    }
-
-    private fun scheduleMidnightReset() {
-        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(this, MidnightResetReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            this, 0, intent,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            else PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Manila")).apply {
-            timeInMillis = System.currentTimeMillis()
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            add(Calendar.DAY_OF_YEAR, 1)
-        }
-
-        alarmManager.setRepeating(
-            AlarmManager.RTC_WAKEUP,
-            calendar.timeInMillis,
-            AlarmManager.INTERVAL_DAY,
-            pendingIntent
-        )
-    }
-
     override fun onDestroy() {
         super.onDestroy()
-        databaseListener?.let { database.removeEventListener(it) }
-        handler.removeCallbacksAndMessages(null)
+        try {
+            sensorDataRef.removeEventListener(databaseListener ?: return)
+            dailyRef.removeEventListener(dailyListener)
+            cumulativeRef.removeEventListener(cumulativeListener)
+        } catch (e: Exception) {
+            Log.e("PanelPerformanceActivity", "Error removing database listeners: ", e)
+        }
+        popPlayer.release()
     }
 
+
     private fun setupMenuButtons() {
-        // Set up menu button listeners
         val frameLayoutIds = listOf(
             R.id.WeatherFrameButton,
             R.id.BatteryFrameButton,

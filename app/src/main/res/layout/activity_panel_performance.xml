@@ -181,7 +181,7 @@
                             android:id="@+id/Text_TodayUsageValue"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="9.8"
+                            android:text="No Data"
                             android:textAlignment="center"
                             android:textColor="@color/white"
                             android:textSize="20sp"
@@ -222,7 +222,7 @@
                             android:id="@+id/Text_TotalUsageValue"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="5,354"
+                            android:text="No Data"
                             android:textAlignment="center"
                             android:textColor="@color/white"
                             android:textSize="20sp"
@@ -335,13 +335,13 @@
                         android:orientation="vertical"
                         android:padding="8dp">
 
-                        <pl.droidsonroids.gif.GifImageView
-                            android:id="@+id/battery_icon"
+                        <ImageView
+                            android:id="@+id/yield_icon"
                             android:layout_width="50dp"
                             android:layout_height="50dp"
                             android:layout_marginBottom="2dp"
-                            android:textAlignment="center"
-                            app:srcCompat="@drawable/yield" />
+                            android:src="@drawable/yield"
+                            android:textAlignment="center" />
 
                         <ImageView
                             android:id="@+id/yieldInfo"
@@ -368,7 +368,7 @@
                             android:id="@+id/Text_TodayYieldValue"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="16.1"
+                            android:text="No Data"
                             android:textAlignment="center"
                             android:textColor="@color/white"
                             android:textSize="20sp"
@@ -409,7 +409,7 @@
                             android:id="@+id/Text_TotalYieldValue"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="98.8"
+                            android:text="No Data"
                             android:textAlignment="center"
                             android:textColor="@color/white"
                             android:textSize="20sp"

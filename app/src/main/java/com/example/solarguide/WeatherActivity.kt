@@ -154,7 +154,6 @@ class WeatherActivity : AppCompatActivity() {
                 findViewById<TextView>(R.id.temp).text = temp
                 findViewById<TextView>(R.id.temp_min).text = tempMin
                 findViewById<TextView>(R.id.temp_max).text = tempMax
-
                 val dateFormat = SimpleDateFormat("hh:mm a", Locale.ENGLISH)
                 dateFormat.timeZone = TimeZone.getTimeZone("Asia/Manila") // Adjust timezone
 

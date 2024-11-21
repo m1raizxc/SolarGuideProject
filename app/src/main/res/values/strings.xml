@@ -1,4 +1,5 @@
 <resources>
+    <string name="battery_percentage">Battery: %1$d%</string>
     <string name="txtview_phone">Login Using Phone Number</string>
     <string name="app_name">SolarGuide</string>
     <string name="get_started">Get Started</string>

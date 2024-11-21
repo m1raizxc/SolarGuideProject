@@ -14,7 +14,8 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.solarguide.databinding.ActivityAvailableDevicesBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
-import java.util.*
+import java.util.Locale
+
 
 class AvailableDevicesActivity : AppCompatActivity() {
 
@@ -70,15 +71,30 @@ class AvailableDevicesActivity : AppCompatActivity() {
 
         // Remove button listeners for each device layout
         binding.layout1RemoveBtn.setOnClickListener {
-            deactivateDevice(ACTIVE_DEVICE_1, "Device in Slot 1 deactivated!", binding.deviceLayout1, binding.layoutAvaible1)
+            deactivateDevice(
+                ACTIVE_DEVICE_1,
+                "Device in Slot 1 deactivated!",
+                binding.deviceLayout1,
+                binding.layoutAvaible1
+            )
         }
 
         binding.layout2RemoveBtn.setOnClickListener {
-            deactivateDevice(ACTIVE_DEVICE_2, "Device in Slot 2 deactivated!", binding.deviceLayout2, binding.layoutAvailable2)
+            deactivateDevice(
+                ACTIVE_DEVICE_2,
+                "Device in Slot 2 deactivated!",
+                binding.deviceLayout2,
+                binding.layoutAvailable2
+            )
         }
 
         binding.layout3RemoveBtn.setOnClickListener {
-            deactivateDevice(ACTIVE_DEVICE_3, "Device in Slot 3 deactivated!", binding.deviceLayout3, binding.layoutAvailable3)
+            deactivateDevice(
+                ACTIVE_DEVICE_3,
+                "Device in Slot 3 deactivated!",
+                binding.deviceLayout3,
+                binding.layoutAvailable3
+            )
         }
 
         // Play startup sound
@@ -87,7 +103,8 @@ class AvailableDevicesActivity : AppCompatActivity() {
 
     private fun showDevicePopup() {
         val dialog = Dialog(this)
-        val dialogView: View = LayoutInflater.from(this).inflate(R.layout.device_popup, binding.root, false)
+        val dialogView: View =
+            LayoutInflater.from(this).inflate(R.layout.device_popup, binding.root, false)
         dialog.setContentView(dialogView)
 
         val deviceListView = dialogView.findViewById<ListView>(R.id.deviceListView)
@@ -100,8 +117,19 @@ class AvailableDevicesActivity : AppCompatActivity() {
         deviceListView.setOnItemClickListener { _, _, position, _ ->
             when (position) {
                 0 -> activateDevice(MINI_FAN, "Mini Fan activated!", R.drawable.fan, "Mini Fan")
-                1 -> activateDevice(POWER_BANK, "Power Bank activated!", R.drawable.powerbank, "Power Bank")
-                2 -> activateDevice(SMART_PHONE, "Smart Phone activated!", R.drawable.smartphone, "Smart Phone")
+                1 -> activateDevice(
+                    POWER_BANK,
+                    "Power Bank activated!",
+                    R.drawable.powerbank,
+                    "Power Bank"
+                )
+
+                2 -> activateDevice(
+                    SMART_PHONE,
+                    "Smart Phone activated!",
+                    R.drawable.smartphone,
+                    "Smart Phone"
+                )
             }
             dialog.dismiss()
         }
@@ -116,15 +144,72 @@ class AvailableDevicesActivity : AppCompatActivity() {
     private fun activateDevice(key: String, message: String, drawableId: Int, deviceName: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
 
+        // Allow multiple instances of the same device type
         when {
-            binding.deviceLayout1.visibility == View.GONE -> setupDeviceSlot(drawableId, deviceName, binding.deviceLayout1, binding.layoutAvaible1, ACTIVE_DEVICE_1, key)
-            binding.deviceLayout2.visibility == View.GONE -> setupDeviceSlot(drawableId, deviceName, binding.deviceLayout2, binding.layoutAvailable2, ACTIVE_DEVICE_2, key)
-            binding.deviceLayout3.visibility == View.GONE -> setupDeviceSlot(drawableId, deviceName, binding.deviceLayout3, binding.layoutAvailable3, ACTIVE_DEVICE_3, key)
-            else -> Toast.makeText(this, "All device slots are occupied!", Toast.LENGTH_SHORT).show()
+            binding.deviceLayout1.visibility == View.GONE -> {
+                setupDeviceSlot(
+                    drawableId,
+                    deviceName,
+                    binding.deviceLayout1,
+                    binding.layoutAvaible1,
+                    ACTIVE_DEVICE_1,
+                    key
+                )
+                updateDeviceOrder(ACTIVE_DEVICE_1, true)
+            }
+
+            binding.deviceLayout2.visibility == View.GONE -> {
+                setupDeviceSlot(
+                    drawableId,
+                    deviceName,
+                    binding.deviceLayout2,
+                    binding.layoutAvailable2,
+                    ACTIVE_DEVICE_2,
+                    key
+                )
+                updateDeviceOrder(ACTIVE_DEVICE_2, true)
+            }
+
+            binding.deviceLayout3.visibility == View.GONE -> {
+                setupDeviceSlot(
+                    drawableId,
+                    deviceName,
+                    binding.deviceLayout3,
+                    binding.layoutAvailable3,
+                    ACTIVE_DEVICE_3,
+                    key
+                )
+                updateDeviceOrder(ACTIVE_DEVICE_3, true)
+            }
+
+            else -> Toast.makeText(this, "All device slots are occupied!", Toast.LENGTH_SHORT)
+                .show()
         }
     }
 
-    private fun setupDeviceSlot(drawableId: Int, deviceName: String, deviceLayout: View, availableLayout: View, layoutKey: String, key: String) {
+    private fun updateDeviceOrder(layoutKey: String, isActive: Boolean) {
+        // This could be used to update the device order or state across the app or database
+        // For example, you can log device order or update shared preferences with device positions
+
+        // Example of how to update the order in shared preferences
+        val editor = sharedPreferences.edit()
+        if (isActive) {
+            editor.putBoolean(layoutKey, true)
+        } else {
+            editor.remove(layoutKey)
+        }
+        editor.apply()
+    }
+
+
+    private fun setupDeviceSlot(
+        drawableId: Int,
+        deviceName: String,
+        deviceLayout: View,
+        availableLayout: View,
+        layoutKey: String,
+        key: String
+    ) {
         deviceLayout.visibility = View.VISIBLE
         availableLayout.visibility = View.GONE
         when (deviceLayout) {
@@ -132,10 +217,12 @@ class AvailableDevicesActivity : AppCompatActivity() {
                 binding.device1Icon.setImageResource(drawableId)
                 binding.textDevice1.text = deviceName
             }
+
             binding.deviceLayout2 -> {
                 binding.device2Icon.setImageResource(drawableId)
                 binding.textDevice2.text = deviceName
             }
+
             binding.deviceLayout3 -> {
                 binding.device3Icon.setImageResource(drawableId)
                 binding.textDevice3.text = deviceName
@@ -144,11 +231,17 @@ class AvailableDevicesActivity : AppCompatActivity() {
         saveDeviceState(key, true, layoutKey)
     }
 
-    private fun deactivateDevice(layoutKey: String, message: String, deviceLayout: View, availableLayout: View) {
+    private fun deactivateDevice(
+        layoutKey: String,
+        message: String,
+        deviceLayout: View,
+        availableLayout: View
+    ) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         deviceLayout.visibility = View.GONE
         availableLayout.visibility = View.VISIBLE
         saveDeviceState("", false, layoutKey)
+        updateDeviceOrder(layoutKey, false)
     }
 
     private fun saveDeviceState(key: String, isActive: Boolean, layoutKey: String = "") {
@@ -166,13 +259,50 @@ class AvailableDevicesActivity : AppCompatActivity() {
     }
 
     private fun loadDeviceStates() {
-        val isMiniFanActive = sharedPreferences.getBoolean(MINI_FAN, false)
-        val isPowerBankActive = sharedPreferences.getBoolean(POWER_BANK, false)
-        val isSmartPhoneActive = sharedPreferences.getBoolean(SMART_PHONE, false)
+        database2.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                // Fetch states from Firebase
+                val isSocket1Active =
+                    snapshot.child("deviceSocket1").getValue(Boolean::class.java) ?: false
+                val isSocket2Active =
+                    snapshot.child("deviceSocket2").getValue(Boolean::class.java) ?: false
+                val isSocket3Active =
+                    snapshot.child("deviceSocket3").getValue(Boolean::class.java) ?: false
 
-        setupDeviceState(isMiniFanActive, binding.deviceLayout1, binding.layoutAvaible1)
-        setupDeviceState(isPowerBankActive, binding.deviceLayout2, binding.layoutAvailable2)
-        setupDeviceState(isSmartPhoneActive, binding.deviceLayout3, binding.layoutAvailable3)
+                // Update UI based on Firebase data
+                setupDeviceState(isSocket1Active, binding.deviceLayout1, binding.layoutAvaible1)
+                setupDeviceState(isSocket2Active, binding.deviceLayout2, binding.layoutAvailable2)
+                setupDeviceState(isSocket3Active, binding.deviceLayout3, binding.layoutAvailable3)
+
+                // Sync SharedPreferences with Firebase data
+                syncSharedPreferences(ACTIVE_DEVICE_1, MINI_FAN, isSocket1Active)
+                syncSharedPreferences(ACTIVE_DEVICE_2, POWER_BANK, isSocket2Active)
+                syncSharedPreferences(ACTIVE_DEVICE_3, SMART_PHONE, isSocket3Active)
+            }
+
+            private fun syncSharedPreferences(
+                layoutKey: String,
+                deviceKey: String,
+                isActive: Boolean
+            ) {
+                val editor = sharedPreferences.edit()
+                editor.putBoolean(deviceKey, isActive)
+                if (isActive) {
+                    editor.putString(layoutKey, deviceKey)
+                } else {
+                    editor.remove(layoutKey)
+                }
+                editor.apply()
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Toast.makeText(
+                    this@AvailableDevicesActivity,
+                    "Error: ${error.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        })
     }
 
     private fun setupDeviceState(isActive: Boolean, deviceLayout: View, availableLayout: View) {
@@ -184,14 +314,20 @@ class AvailableDevicesActivity : AppCompatActivity() {
         database1.child("Battery Percentage").addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val batteryPercentage = snapshot.getValue(String::class.java)?.toIntOrNull() ?: 0
-                binding.devicesBatt.text = String.format(Locale.getDefault(), "%d%%", batteryPercentage)
+                binding.devicesBatt.text =
+                    String.format(Locale.getDefault(), "%d%%", batteryPercentage)
             }
 
             override fun onCancelled(error: DatabaseError) {
-                Toast.makeText(this@AvailableDevicesActivity, "Error: ${error.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this@AvailableDevicesActivity,
+                    "Error: ${error.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         })
     }
+
 
     private fun setupMenuButtons() {
         val frameLayoutIds = listOf(
@@ -211,10 +347,5 @@ class AvailableDevicesActivity : AppCompatActivity() {
         )
 
         ButtonUtils.setMenuButtonClickListener(this, frameLayoutIds, activities)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        if (::popPlayer.isInitialized) popPlayer.release()
     }
 }

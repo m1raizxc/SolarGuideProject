@@ -152,11 +152,10 @@
                     android:padding="8dp"
                     android:paddingTop="8dp">
 
-                    <pl.droidsonroids.gif.GifImageView
+                    <ImageView
                         android:id="@+id/battery_voltage"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
-                        android:textAlignment="center"
                         app:srcCompat="@drawable/voltage" />
 
                     <ImageView
@@ -319,11 +318,10 @@
                     android:orientation="vertical"
                     android:padding="8dp">
 
-                    <pl.droidsonroids.gif.GifImageView
+                    <ImageView
                         android:id="@+id/battery_icon"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
-                        android:textAlignment="center"
                         app:srcCompat="@drawable/battery_status" />
 
                     <ImageView
