@@ -27,7 +27,7 @@ class AvailableDevicesActivity : AppCompatActivity() {
     private lateinit var firebaseAuth: FirebaseAuth
     private lateinit var sharedPreferences: SharedPreferences
 
-    private val criticalBatteryThreshold = 20 // Set the critical battery percentage
+    private val criticalBatteryThreshold = 30 // Set the critical battery percentage
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

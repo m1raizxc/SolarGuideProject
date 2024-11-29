@@ -48,7 +48,7 @@ class BatteryPerformanceActivity : AppCompatActivity() {
     private var databaseListener: ValueEventListener? = null
     private lateinit var popPlayer: MediaPlayer
 
-    private val criticalBatteryThreshold = 20 // Set the critical battery percentage
+    private val criticalBatteryThreshold = 30 // Set the critical battery percentage
 
     private lateinit var batteryReceiver: BatteryReceiver
 
