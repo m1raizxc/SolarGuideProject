@@ -226,6 +226,17 @@ class BatteryPerformanceActivity : AppCompatActivity() {
 
             val notification = NotificationCompat.Builder(this, channelId)
                 .setSmallIcon(R.drawable.ic_battery_low)
+                .setContentTitle("Devices Available For Current Battery Percentage:")
+                .setContentText("Mini Fan, Mini Lamp")
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(pendingIntent)
+                .build()
+
+            notificationManager.notify(1, notification)
+
+            val notification2 = NotificationCompat.Builder(this, channelId)
+                .setSmallIcon(R.drawable.ic_battery_low)
                 .setContentTitle("Battery Low!")
                 .setContentText("Battery is at $batteryPercentage%. Please charge it.")
                 .setAutoCancel(true)
@@ -233,7 +244,7 @@ class BatteryPerformanceActivity : AppCompatActivity() {
                 .setContentIntent(pendingIntent)
                 .build()
 
-            notificationManager.notify(1, notification)
+            notificationManager.notify(2, notification2) // Different notification ID
         }
     }
 

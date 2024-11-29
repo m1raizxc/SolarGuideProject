@@ -96,47 +96,6 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="20dp"
-                    android:layout_marginRight="20dp"
-                    android:orientation="horizontal">
-
-                    <Button
-                        android:id="@+id/addDeviceButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:backgroundTint="@color/primary_color"
-                        android:text="Add Device"
-                        android:textColor="@color/white" />
-
-                    <TextView
-                        android:id="@+id/devicesBattStats"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Battery:"
-                        android:textAlignment="textEnd"
-                        android:textColor="@color/black"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:id="@+id/devicesBatt"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="TextView"
-                        android:textAlignment="textEnd"
-                        android:textColor="@color/black" />
-
-                </LinearLayout>
-
-                <Space
-                    android:layout_width="match_parent"
-                    android:layout_height="20dp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
                     android:layout_height="27dp"
                     android:layout_marginLeft="20dp"
                     android:layout_marginRight="20dp"
@@ -144,13 +103,14 @@
 
                     <TextView
                         android:id="@+id/textView15"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:fontFamily="sans-serif-light"
                         android:text="Charging Devices"
-                        android:textAlignment="textStart"
+                        android:textAlignment="center"
                         android:textColor="@color/black"
-                        android:textSize="18sp" />
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
 
                     <Space
                         android:layout_width="wrap_content"
@@ -160,6 +120,49 @@
                     <Space
                         android:layout_width="10dp"
                         android:layout_height="wrap_content" />
+
+                </LinearLayout>
+
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="20dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="20dp"
+                    android:layout_marginRight="20dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/devicesBattStats"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Battery Percentage:"
+                        android:textAlignment="textStart"
+                        android:textColor="@color/black"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/devicesBatt"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="TextView"
+                        android:textAlignment="textEnd"
+                        android:textColor="@color/black"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/textView27"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="%"
+                        android:textAlignment="viewStart"
+                        android:textColor="@color/black"
+                        android:textSize="16sp" />
 
                 </LinearLayout>
 
@@ -190,54 +193,25 @@
                     android:paddingBottom="10dp">
 
                     <TextView
-                        android:id="@+id/layoutAvaible1"
+                        android:id="@+id/textView8"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_margin="27dp"
-                        android:text="Available"
-                        android:textAlignment="center"
-                        android:textColor="#DDDDDD"
-                        android:visibility="visible" />
+                        android:text="Socket 1"
+                        android:textAlignment="center" />
+
+                    <TextView
+                        android:id="@+id/textView16"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Status"
+                        android:textColor="@color/black" />
 
                     <LinearLayout
                         android:id="@+id/deviceLayout1"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:visibility="gone">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:background="@drawable/border_yellow"
-                            android:gravity="center"
-                            android:orientation="vertical"
-                            android:padding="8dp"
-                            android:paddingTop="8dp">
-
-                            <ImageView
-                                android:id="@+id/device1_icon"
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:textAlignment="center"
-                                app:srcCompat="@drawable/fan" />
-
-                            <TextView
-                                android:id="@+id/text_device1"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Mini Fan"
-                                android:textAlignment="center"
-                                android:textColor="@color/white"
-                                android:textSize="11sp" />
-
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="50dp"
-                            android:layout_height="match_parent"
-                            android:orientation="horizontal"></LinearLayout>
+                        android:visibility="visible">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -246,14 +220,23 @@
                             android:gravity="center"
                             android:orientation="horizontal">
 
+                            <TextView
+                                android:id="@+id/deviceSocket1Value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="TextView"
+                                android:textColor="@color/black" />
+
                             <Button
-                                android:id="@+id/layout1RemoveBtn"
+                                android:id="@+id/socket1StopBtn"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:backgroundTint="#FE5454"
-                                android:text="Remove"
-                                android:textColor="@color/white" />
+                                android:text="Stop"
+                                android:textColor="@color/white"
+                                android:visibility="visible" />
                         </LinearLayout>
 
                     </LinearLayout>
@@ -274,46 +257,27 @@
                     <Space
                         android:layout_width="match_parent"
                         android:layout_height="7.5dp" />
+
+                    <TextView
+                        android:id="@+id/textView11"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Socket 2"
+                        android:textAlignment="center" />
+
+                    <TextView
+                        android:id="@+id/textView19"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Status"
+                        android:textColor="@color/black" />
 
                     <LinearLayout
                         android:id="@+id/deviceLayout2"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:visibility="gone">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:background="@drawable/border_yellow"
-                            android:gravity="center"
-                            android:orientation="vertical"
-                            android:padding="8dp"
-                            android:paddingTop="8dp">
-
-                            <ImageView
-                                android:id="@+id/device2_icon"
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:textAlignment="center"
-                                app:srcCompat="@drawable/powerbank" />
-
-                            <TextView
-                                android:id="@+id/text_device2"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Power Bank"
-                                android:textAlignment="center"
-                                android:textColor="@color/white"
-                                android:textSize="11sp" />
-
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="50dp"
-                            android:layout_height="match_parent"
-                            android:orientation="horizontal"></LinearLayout>
+                        android:visibility="visible">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -322,14 +286,23 @@
                             android:gravity="center"
                             android:orientation="horizontal">
 
+                            <TextView
+                                android:id="@+id/deviceSocket2Value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="TextView"
+                                android:textColor="@color/black" />
+
                             <Button
-                                android:id="@+id/layout2RemoveBtn"
+                                android:id="@+id/socket2StopBtn"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:backgroundTint="#FE5454"
-                                android:text="Remove"
-                                android:textColor="@color/white" />
+                                android:text="Stop"
+                                android:textColor="@color/white"
+                                android:visibility="visible" />
                         </LinearLayout>
 
                     </LinearLayout>
@@ -337,16 +310,6 @@
                     <Space
                         android:layout_width="match_parent"
                         android:layout_height="7.5dp" />
-
-                    <TextView
-                        android:id="@+id/layoutAvailable2"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="27dp"
-                        android:text="Available"
-                        android:textAlignment="center"
-                        android:textColor="#DDDDDD"
-                        android:visibility="visible" />
 
                     <FrameLayout
                         android:layout_width="match_parent"
@@ -361,45 +324,26 @@
                         android:layout_width="match_parent"
                         android:layout_height="7.5dp" />
 
+                    <TextView
+                        android:id="@+id/textView12"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Socket 3"
+                        android:textAlignment="center" />
+
+                    <TextView
+                        android:id="@+id/textView24"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Status"
+                        android:textColor="@color/black" />
+
                     <LinearLayout
                         android:id="@+id/deviceLayout3"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:visibility="gone">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:background="@drawable/border_yellow"
-                            android:gravity="center"
-                            android:orientation="vertical"
-                            android:padding="8dp"
-                            android:paddingTop="8dp">
-
-                            <ImageView
-                                android:id="@+id/device3_icon"
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:textAlignment="center"
-                                app:srcCompat="@drawable/smartphone" />
-
-                            <TextView
-                                android:id="@+id/text_device3"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Smart Phone"
-                                android:textAlignment="center"
-                                android:textColor="@color/white"
-                                android:textSize="11sp" />
-
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="50dp"
-                            android:layout_height="match_parent"
-                            android:orientation="horizontal"></LinearLayout>
+                        android:visibility="visible">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -408,27 +352,26 @@
                             android:gravity="center"
                             android:orientation="horizontal">
 
+                            <TextView
+                                android:id="@+id/deviceSocket3Value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="TextView"
+                                android:textColor="@color/black" />
+
                             <Button
-                                android:id="@+id/layout3RemoveBtn"
+                                android:id="@+id/socket3StopBtn"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:backgroundTint="#FE5454"
-                                android:text="Remove"
-                                android:textColor="@color/white" />
+                                android:text="Stop"
+                                android:textColor="@color/white"
+                                android:visibility="visible" />
                         </LinearLayout>
 
                     </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/layoutAvailable3"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="27dp"
-                        android:text="Available"
-                        android:textAlignment="center"
-                        android:textColor="#DDDDDD"
-                        android:visibility="visible" />
 
                     <Space
                         android:layout_width="match_parent"
