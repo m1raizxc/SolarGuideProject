@@ -4,6 +4,7 @@
 
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_SMS"/>
     <uses-permission android:name="android.permission.READ_SMS"/>
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -59,7 +60,6 @@
 
         <activity
             android:name=".AvailableDevicesActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="false" />
 
         <activity
@@ -78,5 +78,14 @@
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
+
+        <receiver android:name=".MidnightResetReceiver" />
+
+        <receiver android:name=".BatteryReceiver" android:enabled="true" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BATTERY_CHANGED" />
+            </intent-filter>
+        </receiver>
+
     </application>
 </manifest>
